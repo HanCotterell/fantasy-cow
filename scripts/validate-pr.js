@@ -14,7 +14,7 @@ async function run() {
     try {
         const { data: pr } = await octokit.pulls.get({ owner, repo, pr_number: pr_number });
 
-        console.log(`🔎 Validating PR #${pr_number} from ${pr.user.login}`);
+        console.log(`Validating PR #${pr_number} from ${pr.user.login}`);
 
         // Check if PR is from a fork
         if (pr.head.repo.full_name === pr.base.repo.full_name) {
