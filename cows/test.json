@@ -1,6 +1,6 @@
 {
-    "name": "Example",
+    "name": "Test",
     "breed": "Friesian",
-    "image": "images/example_cow.png",
-    "description": "An example cow for demonstration purposes."
+    "image": "images/test.png",
+    "description": "A test cow for demonstration purposes."
 }
