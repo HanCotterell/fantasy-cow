@@ -26,7 +26,7 @@ async function run() {
         */
 
         // Check for required files
-        const files = await octokit.pulls.listFiles({ owner, repo, pr_number: pr_number });
+        const files = await octokit.pulls.listFiles({ owner, repo, pull_number: pr_number });
         const jsonFiles = files.data.filter(f => f.filename.endsWith(".json"));
 
         if (jsonFiles.length === 0) {
