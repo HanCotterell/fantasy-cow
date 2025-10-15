@@ -28,12 +28,13 @@ async function run() {
         const jsonFiles = files.data.filter(f => f.filename.endsWith(".json"));
 
         if (jsonFiles.length === 0) {
-            await comment(`❌ No JSON file found! Please include your **cow.json** file.`);
+            await comment(`❌ No JSON file found! Please include your **fantasy-cow.json** file.`);
             process.exit(1);
         }
 
-        // Validate the cow.json content
+        // Validate the fantasy-cow.json content
         const requiredKeys = ["name", "breed", "image"];
+        const imageFiles = files.data.filter(f => f.filename.startsWith("images/"));
 
         for (const file of jsonFiles) {
             try {
@@ -41,9 +42,31 @@ async function run() {
                 const content = await response.text();
                 const data = JSON.parse(content);
 
+                // Check for required keys
                 const missing = requiredKeys.filter(key => !data[key]);
                 if (missing.length > 0) {
                     await comment(`⚠️ File **${file.filename}** is missing: ${missing.join(", ")}`);
+                    process.exit(1);
+                }
+
+                // Check that the image path matches the expected format
+                if (!data.image.startsWith("images/")) {
+                    await comment(`❌ Image path in **${file.filename}** must start with "images/". Found: "${data.image}"`);
+                    process.exit(1);
+                }
+
+                // Check that the referenced image file exists in the PR
+                const imageExists = imageFiles.some(f => f.filename === data.image);
+                if (!imageExists) {
+                    await comment(`❌ Image file **${data.image}** referenced in **${file.filename}** was not found in the PR. Please include the image file.`);
+                    process.exit(1);
+                }
+
+                // Check that the cow name matches the image filename
+                const expectedImageNamePng = `images/${data.name.toLowerCase()}.png`;
+                const expectedImageNameJpg = `images/${data.name.toLowerCase()}.jpg`;
+                if (data.image !== expectedImageNamePng && data.image !== expectedImageNameJpg) {
+                    await comment(`⚠️ In **${file.filename}**, the image filename should match the cow name. Expected: "${expectedImageNamePng}" or "${expectedImageNameJpg}", but found: "${data.image}"`);
                     process.exit(1);
                 }
             } catch {
