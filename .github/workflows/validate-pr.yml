@@ -1,6 +1,10 @@
 # Github Actions workflow to validate a PR
 name: Validate Fantasy Cow PR
 
+permissions:
+  issues: write
+  pull-requests: write
+
 on:
   pull_request:
     types: [opened, reopened, synchronize]
