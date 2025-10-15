@@ -1,5 +1,5 @@
 {
-    "name": Example,
+    "name": "Example",
     "breed": "Friesian",
     "image": "images/example_cow.png",
     "description": "An example cow for demonstration purposes."
