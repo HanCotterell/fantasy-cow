@@ -73,7 +73,7 @@ async function run() {
                     process.exit(1);
                 }
             } catch {
-                await comment(`❌ File **${file.filename}** is not valid JSON!`);
+                await comment(`❌ File **${file.filename}** is not valid JSON! Correct format should be: { "name": "Cow Name", ...}`);
                 process.exit(1);
             }
         }
