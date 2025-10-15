@@ -3,7 +3,7 @@ import { Octokit } from "@octokit/rest";
 
 // Environment variables
 const token = process.env.GITHUB_TOKEN;
-const pr_number = process.env.PR_NUMBER;
+const pr_number = Number(process.env.PR_NUMBER);
 const repoFullName = process.env.GITHUB_REPOSITORY;
 const octokit = new Octokit({ auth: token });
 
@@ -12,7 +12,7 @@ const [owner, repo] = repoFullName.split("/");
 
 async function run() {
     try {
-        const { data: pr } = await octokit.pulls.get({ owner, repo, pr_number: pr_number });
+        const { data: pr } = await octokit.pulls.get({ owner, repo, pull_number: pr_number });
 
         console.log(`Validating PR #${pr_number} from ${pr.user.login}`);
 
