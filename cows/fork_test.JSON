@@ -1,0 +1,6 @@
+{
+    "name": "Fork Test Cow",
+    "breed": "Jersey",
+    "image": "images/fork_test_cow.png",
+    "description": "A test cow for fork testing purposes."
+}
