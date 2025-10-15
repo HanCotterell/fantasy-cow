@@ -17,13 +17,11 @@ async function run() {
         console.log(`Validating PR #${pr_number} from ${pr.user.login}`);
 
         // Check if PR is from a fork
-        /*
         if (pr.head.repo.full_name === pr.base.repo.full_name) {
             await comment(`❌ It looks like your PR is from a branch in the same repo.
                         You need to open it **from your fork** to the main repo.`);
             process.exit(1);
         }
-        */
 
         // Check for required files
         const files = await octokit.pulls.listFiles({ owner, repo, pull_number: pr_number });
