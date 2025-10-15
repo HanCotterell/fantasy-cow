@@ -63,8 +63,9 @@ async function run() {
                 }
 
                 // Check that the cow name matches the image filename
-                const expectedImageNamePng = `images/${data.name.toLowerCase()}.png`;
-                const expectedImageNameJpg = `images/${data.name.toLowerCase()}.jpg`;
+                const normalizedName = data.name.toLowerCase().replace(/ /g, '_');
+                const expectedImageNamePng = `images/${normalizedName}.png`;
+                const expectedImageNameJpg = `images/${normalizedName}.jpg`;
                 if (data.image !== expectedImageNamePng && data.image !== expectedImageNameJpg) {
                     await comment(`⚠️ In **${file.filename}**, the image filename should match the cow name. Expected: "${expectedImageNamePng}" or "${expectedImageNameJpg}", but found: "${data.image}"`);
                     process.exit(1);
