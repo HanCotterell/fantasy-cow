@@ -28,11 +28,11 @@ async function run() {
         const jsonFiles = files.data.filter(f => f.filename.endsWith(".json"));
 
         if (jsonFiles.length === 0) {
-            await comment(`❌ No JSON file found! Please include your **fantasy-cow.json** file.`);
+            await comment(`❌ No JSON file found! Please include your **fantasy_cow.json** file.`);
             process.exit(1);
         }
 
-        // Validate the fantasy-cow.json content
+        // Validate the fantasy_cow.json content
         const requiredKeys = ["name", "breed", "image"];
         const imageFiles = files.data.filter(f => f.filename.startsWith("images/"));
 
