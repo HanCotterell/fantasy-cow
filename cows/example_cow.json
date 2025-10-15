@@ -1,6 +1,6 @@
 {
-    "name": "Bessie",
+    "name": "Example Cow",
     "breed": "Highland",
-    "image": "images/bessie.png",
+    "image": "images/example_cow.png",
     "description": "A gentle and friendly cow that loves to graze in the meadow."
 }
