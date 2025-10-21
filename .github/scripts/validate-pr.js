@@ -113,11 +113,13 @@ async function run() {
                     return lines.every(line => {
                         const trimmed = line.trim();
                         if (trimmed === "{" || trimmed === "}" || trimmed === "") return true;
-                        return line.startsWith("\t") && !line.startsWith("\t\t");
-                        // TODO: Perhaps allow spaces as well? Some editors automatically convert tabs to spaces.
+                        return (
+                            (line.startsWith("\t") && !line.startsWith("\t\t")) ||
+                            (line.startsWith("    ") && !line.startsWith("        "))
+                        );
                     });
                 },
-                failMsg: `❌ File **${file.filename}** is not properly indented with 1 tab.`
+                failMsg: `❌ File **${file.filename}** is not properly indented.`
             },
             {
                 name: "Check line endings",
