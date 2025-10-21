@@ -45,12 +45,13 @@ async function run() {
 
         // --- Load and parse JSON file ---
         const file = jsonFiles[0];
-        let data;
+        let data, rawContent;
 
         try {
             const response = await fetch(file.raw_url);
             const content = await response.text();
             data = JSON.parse(content);
+            rawContent = content;
         } catch {
             await comment(`❌ File **${file.filename}** is not valid JSON!`);
             process.exit(1);
@@ -104,6 +105,24 @@ async function run() {
                 },
                 failMsg:
                     `❌ Image file name in **${file.filename}** should be based on the cow's name. Expected: images/${data.name.toLowerCase().replace(/ /g, '_')}.png or .jpg`
+            },
+            {
+                name: "Check proper indentation",
+                test: ({ rawContent }) => {
+                    const lines = rawContent.split("\n");
+                    return lines.every(line => {
+                        const trimmed = line.trim();
+                        if (trimmed === "{" || trimmed === "}" || trimmed === "") return true;
+                        return line.startsWith("\t") && !line.startsWith("\t\t");
+                        // TODO: Perhaps allow spaces as well? Some editors automatically convert tabs to spaces.
+                    });
+                },
+                failMsg: `❌ File **${file.filename}** is not properly indented with 1 tab.`
+            },
+            {
+                name: "Check line endings",
+                test: ({ rawContent }) => !rawContent.includes("\r\n"),
+                failMsg: `❌ File **${file.filename}** contains Windows-style line endings (CRLF). Please convert to Unix-style (LF) line endings.`
             }
         ];
 
@@ -112,7 +131,7 @@ async function run() {
         let commentString = `### 🧪 PR Validation Results for #${pr_number}\n\n`;
 
         for (const testObj of testsToRun) {
-            const result = testObj.test({ pr, data, file, imageExists });
+            const result = testObj.test({ pr, data, file, imageExists, rawContent });
             const valid = result === true || result.valid;
 
             if (valid) {
