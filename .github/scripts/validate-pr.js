@@ -1,4 +1,3 @@
-// Validation logic for PRs
 import { Octokit } from "@octokit/rest";
 
 // Environment variables
