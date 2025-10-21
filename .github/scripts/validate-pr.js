@@ -30,7 +30,6 @@ async function run() {
         const jsonFiles = files.filter(f => f.filename.endsWith(".json"));
         const imageFiles = files.filter(f => f.filename.startsWith("images/"));
         const requiredKeys = ["name", "breed", "image"];
-        const imageFiles = files.data.filter(f => f.filename.startsWith("images/"));
 
         // --- Basic pre-checks ---
         if (jsonFiles.length === 0) {
