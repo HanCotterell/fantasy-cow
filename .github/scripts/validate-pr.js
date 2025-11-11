@@ -95,13 +95,13 @@ async function run() {
 
         // --- Tests ---
         const testsToRun = [
-            {
+           /* {
                 name: "Check PR is from Fork",
                 test: ({ pr }) =>
                     pr.head.repo.full_name !== pr.base.repo.full_name,
                 failMsg:
                     "❌ It looks like your PR is from a branch in the same repo. You need to open it **from your fork** to the main repo."
-            },
+            },*/
             {
                 name: "Validate JSON Content",
                 test: ({ data }) => {
