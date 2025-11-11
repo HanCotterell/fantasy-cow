@@ -53,6 +53,7 @@ async function run() {
 
         // --- Basic pre-checks ---
         if (jsonFiles.length === 0) {
+            commentString += `\n---\n\n`;
             commentString += "❌ No JSON file found! Please include your **<cow>.json** file.\n";
             if (failCount >= 3) {
                 commentString += `\n\n⚠️ You have ${failCount} previous failed validation attempts. Please schedule a Codeday tutoring session for help with this exercise.`;
@@ -63,6 +64,7 @@ async function run() {
 
         // There should only be one JSON file in the PR
         if (jsonFiles.length > 1) {
+            commentString += `\n---\n\n`;
             commentString += "❌ Multiple JSON files found! Please include only one **<cow>.json** file.\n";
             if (failCount >= 3) {
                 commentString += `\n\n⚠️ You have ${failCount} previous failed validation attempts. Please schedule a Codeday tutoring session for help with this exercise.`;
@@ -81,6 +83,7 @@ async function run() {
             data = JSON.parse(content);
             rawContent = content;
         } catch {
+            commentString += `\n---\n\n`;
             commentString += `❌ File **${file.filename}** is not valid JSON!`;
              if (failCount >= 3) {
                 commentString += `\n\n⚠️ You have ${failCount} previous failed validation attempts. Please schedule a Codeday tutoring session for help with this exercise.`;
