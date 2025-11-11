@@ -1,5 +1,5 @@
 {
    "name": "A new cow",
-    "image": "images/testCow.png",
+    "image": "testCow.png",
     "description": "A newly created cow for testing purposes."
 }
