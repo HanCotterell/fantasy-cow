@@ -112,10 +112,7 @@ async function run() {
                     return lines.every(line => {
                         const trimmed = line.trim();
                         if (trimmed === "{" || trimmed === "}" || trimmed === "") return true;
-                        return (
-                            (line.startsWith("\t") && !line.startsWith("\t\t")) ||
-                            (line.startsWith("    ") && !line.startsWith("        "))
-                        );
+                        return line.startsWith("    ") && !line.startsWith("        ");
                     });
                 },
                 failMsg: `❌ File **${file.filename}** is not properly indented.`
