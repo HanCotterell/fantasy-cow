@@ -17,6 +17,25 @@ async function run() {
             pull_number: pr_number
         });
 
+        // --- Checking for previous validation faiures ---
+
+        // Get all comments on the PR
+        const { data: comments } = await octokit.issues.listComments({
+            owner,
+            repo,
+            issue_number: pr_number
+        });
+
+        // Count all failure comments made by the bot
+        const failComments = comments.filter(
+            c => c.user.type === "Bot" &&
+            c.body.includes("Please fix the issues above and update your PR.")
+        );
+
+        const failCount = failComments.length;
+
+        // --- Start validation ---
+
         console.log(`🔍 Validating PR #${pr_number} from ${pr.user.login}`);
 
         // Get files in PR
@@ -152,6 +171,9 @@ async function run() {
             process.exit(0);
         } else {
             commentString += `❌ ${testsPassed}/${testsToRun.length} passed. Please fix the issues above and update your PR.`;
+            if (failCount >= 3) {
+                commentString += `\n\n⚠️ You have ${failCount} previous failed validation attempts. Please schedule a Codeday tutoring session for help with this exercise.`;
+            }
             await comment(commentString);
             process.exit(1);
         }
