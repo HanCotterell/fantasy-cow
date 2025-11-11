@@ -29,7 +29,7 @@ async function run() {
         // Count all failure comments made by the bot
         const failComments = comments.filter(
             c => c.user.type === "Bot" &&
-            c.body.includes("Please fix the issues above and update your PR.")
+            c.body.includes("❌")
         );
 
         const failCount = failComments.length;
@@ -49,15 +49,26 @@ async function run() {
         const imageFiles = files.filter(f => f.filename.startsWith("images/"));
         const requiredKeys = ["name", "breed", "image"];
 
+        let commentString = `### 🧪 PR Validation Results for #${pr_number}\n\n`;
+        commentString += `\n---\n\n`;
+
         // --- Basic pre-checks ---
         if (jsonFiles.length === 0) {
-            await comment("❌ No JSON file found! Please include your **<cow>.json** file.");
+            commentString += "❌ No JSON file found! Please include your **<cow>.json** file.\n";
+            if (failCount >= 3) {
+                commentString += `\n\n⚠️ You have ${failCount} previous failed validation attempts. Please schedule a Codeday tutoring session for help with this exercise.`;
+            }
+            await comment(commentString);
             process.exit(1);
         }
 
         // There should only be one JSON file in the PR
         if (jsonFiles.length > 1) {
-            await comment("❌ Multiple JSON files found! Please include only one **<cow>.json** file.");
+            commentString += "❌ Multiple JSON files found! Please include only one **<cow>.json** file.\n";
+            if (failCount >= 3) {
+                commentString += `\n\n⚠️ You have ${failCount} previous failed validation attempts. Please schedule a Codeday tutoring session for help with this exercise.`;
+            }
+            await comment(commentString);
             process.exit(1);
         }
 
@@ -145,7 +156,6 @@ async function run() {
 
         // --- Run tests ---
         let testsPassed = 0;
-        let commentString = `### 🧪 PR Validation Results for #${pr_number}\n\n`;
 
         for (const testObj of testsToRun) {
             const result = testObj.test({ pr, data, file, imageExists, rawContent });
@@ -162,8 +172,6 @@ async function run() {
                 commentString += `${failMessage}\n`;
             }
         }
-
-        commentString += `\n---\n\n`;
 
         if (testsPassed === testsToRun.length) {
             commentString += `✅ All tests passed! Nice work on your PR! 🎉`;
