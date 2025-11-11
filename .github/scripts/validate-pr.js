@@ -82,7 +82,11 @@ async function run() {
             data = JSON.parse(content);
             rawContent = content;
         } catch {
-            await comment(`❌ File **${file.filename}** is not valid JSON!`);
+            commentString += `❌ File **${file.filename}** is not valid JSON!`;
+             if (failCount >= 3) {
+                commentString += `\n\n⚠️ You have ${failCount} previous failed validation attempts. Please schedule a Codeday tutoring session for help with this exercise.`;
+            }
+            await comment(commentString);
             process.exit(1);
         }
 
