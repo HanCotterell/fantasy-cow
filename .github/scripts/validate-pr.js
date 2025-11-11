@@ -50,7 +50,6 @@ async function run() {
         const requiredKeys = ["name", "breed", "image"];
 
         let commentString = `### 🧪 PR Validation Results for #${pr_number}\n\n`;
-        commentString += `\n---\n\n`;
 
         // --- Basic pre-checks ---
         if (jsonFiles.length === 0) {
@@ -176,6 +175,8 @@ async function run() {
                 commentString += `${failMessage}\n`;
             }
         }
+
+        commentString += `\n---\n\n`;
 
         if (testsPassed === testsToRun.length) {
             commentString += `✅ All tests passed! Nice work on your PR! 🎉`;
