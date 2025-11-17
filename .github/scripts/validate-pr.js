@@ -113,7 +113,7 @@ async function run() {
             {
                 name: "Check PR is going to correct repo",
                 test: ({ pr }) =>
-                    pr.base.repo.owner.login !== "codeday",
+                    pr.base.repo.owner.login === "codeday",
                 failMsg:
                     "❌ It looks like your PR is not pointing to the codeday repo. You need to open it **from your fork** to the main **codeday repo**."
             },
