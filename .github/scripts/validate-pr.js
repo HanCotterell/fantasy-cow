@@ -108,7 +108,7 @@ async function run() {
                 name: "Validate JSON Content",
                 test: ({ data }) => {
                     const missing = requiredKeys.filter(key => !data[key]);
-                    if (missing === 3) {
+                    if (missing.length === 3) {
                         commentString += `\n---\n\n`;
                         commentString += `❌ File **${file.filename}** is missing all required fields`;
                         if (failCount >= 3) {
