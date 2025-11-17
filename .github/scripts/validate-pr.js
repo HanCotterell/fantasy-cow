@@ -73,6 +73,18 @@ async function run() {
             process.exit(1);
         }
 
+        // Check for empty JSON file
+        if (jsonFiles[0].size === 0) {
+            commentString += `\n---\n\n`;
+            commentString += `❌ File **${jsonFiles[0].filename}** is empty! Please add the required content.`;
+            if (failCount >= 3) {
+                commentString += `\n\n⚠️ You have ${failCount} previous failed validation attempts. Please schedule a CSE session using your student dashboard.`;
+            }
+            await comment(commentString);
+            process.exit(1);
+        }
+
+
         // --- Load and parse JSON file ---
         const file = jsonFiles[0];
         let data, rawContent;
@@ -95,10 +107,21 @@ async function run() {
         // Helper: check if referenced image exists
         const imageExists = imageFiles.some(img => img.filename === data.image);
 
+        // Helper: check if "nanme" field exists before running name-based tests
+        if (!data.name) {
+            commentString += `\n---\n\n`;
+            commentString += `❌ File **${file.filename}** is missing the "name" field, which is required for further validation tests.`;
+             if (failCount >= 3) {
+                commentString += `\n\n⚠️ You have ${failCount} previous failed validation attempts. Please schedule a CSE session using your student dashboard.`;
+            }
+            await comment(commentString);
+            process.exit(1);
+        }
+
         // --- Tests ---
         const testsToRun = [
             {
-                name: "Check PR is going to codeday repo",
+                name: "Check PR is going to correct repo",
                 test: ({ pr }) =>
                     pr.base.repo.full_name !== "codeday/fantasy-cow",
                 failMsg:
@@ -107,17 +130,7 @@ async function run() {
             {
                 name: "Validate JSON Content",
                 test: ({ data }) => {
-                    const missing = requiredKeys.filter(key => !data[key]);
-                    if (missing.length === 3) {
-                        commentString += `\n---\n\n`;
-                        commentString += `❌ File **${file.filename}** is missing all required fields`;
-                        if (failCount >= 3) {
-                            commentString += `\n\n⚠️ You have ${failCount} previous failed validation attempts. Please schedule a CSE session using your student dashboard.`;
-                        }
-                        await comment(commentString);
-                        process.exit(1);
-                    }
-                        
+                    const missing = requiredKeys.filter(key => !data[key]);  
                     return missing.length > 0
                         ? { valid: false, missing }
                         : { valid: true };
