@@ -4,10 +4,11 @@ name: Validate Fantasy Cow PR
 permissions:
   issues: write
   pull-requests: write
+  contents: read
 
 on:
-  pull_request:
-    types: [opened, reopened, synchronize]
+  pull_request_target:
+    types: [opened, reopened, synchronize, edited]
 
 jobs:
   validate:
@@ -16,6 +17,8 @@ jobs:
     steps:
       - name: Check out code
         uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
 
       - name: Set up Node.js
         uses: actions/setup-node@v4
