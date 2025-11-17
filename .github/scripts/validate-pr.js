@@ -29,7 +29,7 @@ async function run() {
         // Count all failure comments made by the bot
         const failComments = comments.filter(
             c => c.user.type === "Bot" &&
-            c.body.includes("❌")
+                c.body.includes("❌")
         );
 
         const failCount = failComments.length;
@@ -86,7 +86,7 @@ async function run() {
         } catch {
             commentString += `\n---\n\n`;
             commentString += `❌ File **${file.filename}** is not valid JSON!`;
-             if (failCount >= 3) {
+            if (failCount >= 3) {
                 commentString += `\n\n⚠️ You have ${failCount} previous failed validation attempts. Please schedule a CSE session using your student dashboard.`;
             }
             await comment(commentString);
@@ -97,7 +97,7 @@ async function run() {
         const imageExists = imageFiles.some(img => img.filename === data.image);
 
         // Helper: validate JSON content before running field-based tests
-        const missing = requiredKeys.filter(key => !data[key]);  
+        const missing = requiredKeys.filter(key => !data[key]);
         if (missing.length > 0) {
             commentString += `\n---\n\n`;
             commentString += `❌ File **${file.filename}** is missing: ${missing.join(", ")}. These are required for further validation.`;
@@ -113,7 +113,7 @@ async function run() {
             {
                 name: "Check PR is going to correct repo",
                 test: ({ pr }) =>
-                    pr.base.repo.full_name !== "codeday/fantasy-cow",
+                    pr.base.repo.owner.login !== "codeday",
                 failMsg:
                     "❌ It looks like your PR is not pointing to the codeday repo. You need to open it **from your fork** to the main **codeday repo**."
             },
