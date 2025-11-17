@@ -73,17 +73,6 @@ async function run() {
             process.exit(1);
         }
 
-        // Check for empty JSON file
-        if (jsonFiles[0].size === 0) {
-            commentString += `\n---\n\n`;
-            commentString += `❌ File **${jsonFiles[0].filename}** is empty! Please add the required content.`;
-            if (failCount >= 3) {
-                commentString += `\n\n⚠️ You have ${failCount} previous failed validation attempts. Please schedule a CSE session using your student dashboard.`;
-            }
-            await comment(commentString);
-            process.exit(1);
-        }
-
 
         // --- Load and parse JSON file ---
         const file = jsonFiles[0];
@@ -107,11 +96,12 @@ async function run() {
         // Helper: check if referenced image exists
         const imageExists = imageFiles.some(img => img.filename === data.image);
 
-        // Helper: check if "nanme" field exists before running name-based tests
-        if (!data.name) {
+        // Helper: validate JSON content before running field-based tests
+        const missing = requiredKeys.filter(key => !data[key]);  
+        if (missing.length > 0) {
             commentString += `\n---\n\n`;
-            commentString += `❌ File **${file.filename}** is missing the "name" field, which is required for further validation tests.`;
-             if (failCount >= 3) {
+            commentString += `❌ File **${file.filename}** is missing: ${missing.join(", ")}. These are required for further validation.`;
+            if (failCount >= 3) {
                 commentString += `\n\n⚠️ You have ${failCount} previous failed validation attempts. Please schedule a CSE session using your student dashboard.`;
             }
             await comment(commentString);
@@ -126,17 +116,6 @@ async function run() {
                     pr.base.repo.full_name !== "codeday/fantasy-cow",
                 failMsg:
                     "❌ It looks like your PR is not pointing to the codeday repo. You need to open it **from your fork** to the main **codeday repo**."
-            },
-            {
-                name: "Validate JSON Content",
-                test: ({ data }) => {
-                    const missing = requiredKeys.filter(key => !data[key]);  
-                    return missing.length > 0
-                        ? { valid: false, missing }
-                        : { valid: true };
-                },
-                failMsg: ({ missing }) =>
-                    `❌ File **${file.filename}** is missing: ${missing.join(", ")}`
             },
             {
                 name: "Check image path",
@@ -188,7 +167,7 @@ async function run() {
 
         for (const testObj of testsToRun) {
             const result = testObj.test({ pr, data, file, imageExists, rawContent });
-            const valid = result === true || result.valid;
+            const valid = result === true;
 
             if (valid) {
                 commentString += `✅ **${testObj.name}** passed!\n`;
