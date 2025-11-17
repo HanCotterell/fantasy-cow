@@ -56,7 +56,7 @@ async function run() {
             commentString += `\n---\n\n`;
             commentString += "❌ No JSON file found! Please include your **<cow>.json** file.\n";
             if (failCount >= 3) {
-                commentString += `\n\n⚠️ You have ${failCount} previous failed validation attempts. Please schedule a Codeday tutoring session for help with this exercise.`;
+                commentString += `\n\n⚠️ You have ${failCount} previous failed validation attempts. Please schedule a CSE session using your student dashboard.`;
             }
             await comment(commentString);
             process.exit(1);
@@ -67,7 +67,7 @@ async function run() {
             commentString += `\n---\n\n`;
             commentString += "❌ Multiple JSON files found! Please include only one **<cow>.json** file.\n";
             if (failCount >= 3) {
-                commentString += `\n\n⚠️ You have ${failCount} previous failed validation attempts. Please schedule a Codeday tutoring session for help with this exercise.`;
+                commentString += `\n\n⚠️ You have ${failCount} previous failed validation attempts. Please schedule a CSE session using your student dashboard.`;
             }
             await comment(commentString);
             process.exit(1);
@@ -86,7 +86,7 @@ async function run() {
             commentString += `\n---\n\n`;
             commentString += `❌ File **${file.filename}** is not valid JSON!`;
              if (failCount >= 3) {
-                commentString += `\n\n⚠️ You have ${failCount} previous failed validation attempts. Please schedule a Codeday tutoring session for help with this exercise.`;
+                commentString += `\n\n⚠️ You have ${failCount} previous failed validation attempts. Please schedule a CSE session using your student dashboard.`;
             }
             await comment(commentString);
             process.exit(1);
@@ -188,7 +188,7 @@ async function run() {
         } else {
             commentString += `❌ ${testsPassed}/${testsToRun.length} passed. Please fix the issues above and update your PR.`;
             if (failCount >= 3) {
-                commentString += `\n\n⚠️ You have ${failCount} previous failed validation attempts. Please schedule a Codeday tutoring session for help with this exercise.`;
+                commentString += `\n\n⚠️ You have ${failCount} previous failed validation attempts. Please schedule a CSE session using your student dashboard.`;
             }
             await comment(commentString);
             process.exit(1);
