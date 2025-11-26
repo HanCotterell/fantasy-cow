@@ -141,8 +141,3 @@ Once your PR passes validation and is approved, it will be merged into the main 
 Your fantasy cow will then become part of the official herd!
 
 You’ve now successfully completed your first Pull Request, congratulations!
-
-## Troubleshooting Guide (TODO)
-
-
-

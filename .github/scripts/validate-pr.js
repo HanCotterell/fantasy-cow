@@ -1,4 +1,3 @@
-// Validation logic for PRs
 import { Octokit } from "@octokit/rest";
 
 // Environment variables
@@ -12,81 +11,224 @@ const [owner, repo] = repoFullName.split("/");
 
 async function run() {
     try {
-        const { data: pr } = await octokit.pulls.get({ owner, repo, pull_number: pr_number });
+        const { data: pr } = await octokit.pulls.get({
+            owner,
+            repo,
+            pull_number: pr_number
+        });
 
-        console.log(`Validating PR #${pr_number} from ${pr.user.login}`);
+        // --- Checking for previous validation faiures ---
 
-        // Check if PR is from a fork
-        /*
-        if (pr.head.repo.full_name === pr.base.repo.full_name) {
-            await comment(`❌ It looks like your PR is from a branch in the same repo.
-                        You need to open it **from your fork** to the main repo.`);
-            process.exit(1);
-        }
-        */
+        // Get all comments on the PR
+        const { data: comments } = await octokit.issues.listComments({
+            owner,
+            repo,
+            issue_number: pr_number
+        });
 
-        // Check for required files
-        const files = await octokit.pulls.listFiles({ owner, repo, pull_number: pr_number });
-        const jsonFiles = files.data.filter(f => f.filename.endsWith(".json"));
+        // Count all failure comments made by the bot
+        const failComments = comments.filter(
+            c => c.user.type === "Bot" &&
+                c.body.includes("❌")
+        );
 
-        if (jsonFiles.length === 0) {
-            await comment(`❌ No JSON file found! Please include your **fantasy_cow.json** file.`);
-            process.exit(1);
-        }
+        const failCount = failComments.length;
 
-        // Validate the fantasy_cow.json content
+        // --- Start validation ---
+
+        console.log(`🔍 Validating PR #${pr_number} from ${pr.user.login}`);
+
+        // Get files in PR
+        const { data: files } = await octokit.pulls.listFiles({
+            owner,
+            repo,
+            pull_number: pr_number
+        });
+
+        const jsonFiles = files.filter(f => f.filename.endsWith(".json"));
+        const imageFiles = files.filter(f => f.filename.startsWith("images/"));
         const requiredKeys = ["name", "breed", "image"];
-        const imageFiles = files.data.filter(f => f.filename.startsWith("images/"));
 
-        for (const file of jsonFiles) {
-            try {
-                const response = await fetch(file.raw_url);
-                const content = await response.text();
-                const data = JSON.parse(content);
+        let commentString = `### 🧪 PR Validation Results for #${pr_number}\n\n`;
 
-                // Check for required keys
-                const missing = requiredKeys.filter(key => !data[key]);
-                if (missing.length > 0) {
-                    await comment(`⚠️ File **${file.filename}** is missing: ${missing.join(", ")}`);
-                    process.exit(1);
-                }
+        // --- Basic pre-checks ---
+        if (jsonFiles.length === 0) {
+            commentString += `\n---\n\n`;
+            commentString += "❌ No JSON file found! Please include your **<cow>.json** file.\n";
+            if (failCount >= 3) {
+                commentString += `\n\n⚠️ You have ${failCount} previous failed validation attempts. Please schedule a CSE session using your student dashboard.`;
+            }
+            await comment(commentString);
+            process.exit(1);
+        }
 
-                // Check that the image path matches the expected format
-                if (!data.image.startsWith("images/")) {
-                    await comment(`❌ Image path in **${file.filename}** must start with "images/". Found: "${data.image}"`);
-                    process.exit(1);
-                }
+        // There should only be one JSON file in the PR
+        if (jsonFiles.length > 1) {
+            commentString += `\n---\n\n`;
+            commentString += "❌ Multiple JSON files found! Please include only one **<cow>.json** file.\n";
+            if (failCount >= 3) {
+                commentString += `\n\n⚠️ You have ${failCount} previous failed validation attempts. Please schedule a CSE session using your student dashboard.`;
+            }
+            await comment(commentString);
+            process.exit(1);
+        }
 
-                // Check that the referenced image file exists in the PR
-                const imageExists = imageFiles.some(f => f.filename === data.image);
-                if (!imageExists) {
-                    await comment(`❌ Image file **${data.image}** referenced in **${file.filename}** was not found in the PR. Please include the image file.`);
-                    process.exit(1);
-                }
 
-                // Check that the cow name matches the image filename
-                const normalizedName = data.name.toLowerCase().replace(/ /g, '_');
-                const expectedImageNamePng = `images/${normalizedName}.png`;
-                const expectedImageNameJpg = `images/${normalizedName}.jpg`;
-                if (data.image !== expectedImageNamePng && data.image !== expectedImageNameJpg) {
-                    await comment(`⚠️ In **${file.filename}**, the image filename should match the cow name. Expected: "${expectedImageNamePng}" or "${expectedImageNameJpg}", but found: "${data.image}"`);
-                    process.exit(1);
-                }
-            } catch {
-                await comment(`❌ File **${file.filename}** is not valid JSON! Correct format should be: { "name": "Cow Name", ...}`);
-                process.exit(1);
+        // --- Load and parse JSON file ---
+        const file = jsonFiles[0];
+        let data, rawContent;
+
+        try {
+            const response = await fetch(file.raw_url);
+            const content = await response.text();
+            data = JSON.parse(content);
+            rawContent = content;
+        } catch {
+            commentString += `\n---\n\n`;
+            commentString += `❌ File **${file.filename}** is not valid JSON!`;
+            if (failCount >= 3) {
+                commentString += `\n\n⚠️ You have ${failCount} previous failed validation attempts. Please schedule a CSE session using your student dashboard.`;
+            }
+            await comment(commentString);
+            process.exit(1);
+        }
+
+        // Helper: check if referenced image exists
+        const imageExists = imageFiles.some(img => img.filename === data.image);
+
+        // Helper: validate JSON content before running field-based tests
+        const missing = requiredKeys.filter(key => !data[key]);
+        if (missing.length > 0) {
+            commentString += `\n---\n\n`;
+            commentString += `❌ File **${file.filename}** is missing: ${missing.join(", ")}. These are required for further validation.`;
+            if (failCount >= 3) {
+                commentString += `\n\n⚠️ You have ${failCount} previous failed validation attempts. Please schedule a CSE session using your student dashboard.`;
+            }
+            await comment(commentString);
+            process.exit(1);
+        }
+
+        // --- Tests ---
+        const testsToRun = [
+            {
+                name: "Check PR is going to correct repo",
+                test: ({ pr }) =>
+                    pr.base.repo.owner.login === "codeday",
+                failMsg:
+                    "❌ It looks like your PR is not pointing to the codeday repo. You need to open it **from your fork** to the main **codeday repo**."
+            },
+            {
+                name: "Check image path",
+                test: ({ data }) => data.image?.startsWith("images/"),
+                failMsg:
+                    `❌ Image path in **${file.filename}** must start with "images/".`
+            },
+            {
+                name: "Check image file exists",
+                test: ({ data, imageExists }) => imageExists,
+                failMsg:
+                    `❌ Image file **${data.image}** specified in **${file.filename}** does not exist in the PR.`
+            },
+            {
+                name: "Check image file size",
+                test: async ({ data, imageFiles }) => {
+                    const MAX_SIZE = 200 * 1024; // 200 KB
+                    const imageFile = imageFiles.find(f => f.filename === data.image);
+
+                    if (!imageFile) return false;
+
+                    try {
+                        const response = await fetch(imageFile.raw_url);
+                        const buffer = await response.arrayBuffer();
+                        return buffer.byteLength <= MAX_SIZE;
+                    } catch (err) {
+                        console.warn(`⚠️ Could not fetch image for size check: ${data.image}`, err);
+                        return false;
+                    }
+                },
+                failMsg:
+                    "❌ Image file is too large! Maximum allowed size is **200 KB**. Please resize or compress it and update your PR."
+            },
+            {
+                name: "Check file naming convention",
+                test: ({ data }) => {
+                    const normalizedName = data.name.toLowerCase().replace(/ /g, '_');
+                    const expectedImageNamePng = `images/${normalizedName}.png`;
+                    const expectedImageNameJpg = `images/${normalizedName}.jpg`;
+                    return (
+                        data.image === expectedImageNamePng ||
+                        data.image === expectedImageNameJpg
+                    );
+                },
+                failMsg:
+                    `❌ Image file name in **${file.filename}** should be based on the cow's name. Expected: images/${data.name.toLowerCase().replace(/ /g, '_')}.png or .jpg`
+            },
+            {
+                name: "Check proper indentation",
+                test: ({ rawContent }) => {
+                    const lines = rawContent.split("\n");
+                    return lines.every(line => {
+                        const trimmed = line.trim();
+                        if (trimmed === "{" || trimmed === "}" || trimmed === "") return true;
+                        return line.startsWith("    ") && !line.startsWith("        ");
+                    });
+                },
+                failMsg: `❌ File **${file.filename}** is not properly indented.`
+            },
+            {
+                name: "Check line endings",
+                test: ({ rawContent }) => !rawContent.includes("\r\n"),
+                failMsg: `❌ File **${file.filename}** contains Windows-style line endings (CRLF). Please convert to Unix-style (LF) line endings.`
+            }
+        ];
+
+        // --- Run tests ---
+        let testsPassed = 0;
+
+        for (const testObj of testsToRun) {
+            let result = testObj.test({ pr, data, file, imageExists, rawContent, imageFiles });
+
+            if (result instanceof Promise) {
+                result = await result;
+            }
+
+            const valid = result === true;
+
+            if (valid) {
+                commentString += `✅ **${testObj.name}** passed!\n`;
+                testsPassed++;
+            } else {
+                const failMessage =
+                    typeof testObj.failMsg === "function"
+                        ? testObj.failMsg({ data, file, imageExists, rawContent, imageFiles })
+                        : testObj.failMsg;
+                commentString += `${failMessage}\n`;
             }
         }
 
-        await comment(`✅ Everything looks great! Nice work on your first PR! 🎉`);
+        commentString += `\n---\n\n`;
+
+        if (testsPassed === testsToRun.length) {
+            commentString += `✅ All tests passed! Nice work on your PR! 🎉`;
+            await comment(commentString);
+            process.exit(0);
+        } else {
+            commentString += `❌ ${testsPassed}/${testsToRun.length} passed. Please fix the issues above and update your PR.`;
+            if (failCount >= 3) {
+                commentString += `\n\n⚠️ You have ${failCount} previous failed validation attempts. Please schedule a CSE session using your student dashboard.`;
+            }
+            await comment(commentString);
+            process.exit(1);
+        }
+
     } catch (err) {
         console.error("Error validating PR:", err);
         process.exit(1);
     }
 }
 
+// Helper: Comment on the PR
 async function comment(message) {
-    // Helper function to post a comment on the PR
     await octokit.issues.createComment({
         owner,
         repo,
