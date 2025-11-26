@@ -130,6 +130,26 @@ async function run() {
                     `❌ Image file **${data.image}** specified in **${file.filename}** does not exist in the PR.`
             },
             {
+                name: "Check image file size",
+                test: async ({ data, imageFiles }) => {
+                    const MAX_SIZE = 200 * 1024; // 200 KB
+                    const imageFile = imageFiles.find(f => f.filename === data.image);
+
+                    if (!imageFile) return false;
+
+                    try {
+                        const response = await fetch(imageFile.raw_url);
+                        const buffer = await response.arrayBuffer();
+                        return buffer.byteLength <= MAX_SIZE;
+                    } catch (err) {
+                        console.warn(`⚠️ Could not fetch image for size check: ${data.image}`, err);
+                        return false;
+                    }
+                },
+                failMsg:
+                    "❌ Image file is too large! Maximum allowed size is **200 KB**. Please resize or compress it and update your PR."
+            },
+            {
                 name: "Check file naming convention",
                 test: ({ data }) => {
                     const normalizedName = data.name.toLowerCase().replace(/ /g, '_');
@@ -166,7 +186,12 @@ async function run() {
         let testsPassed = 0;
 
         for (const testObj of testsToRun) {
-            const result = testObj.test({ pr, data, file, imageExists, rawContent });
+            let result = testObj.test({ pr, data, file, imageExists, rawContent, imageFiles });
+
+            if (result instanceof Promise) {
+                result = await result;
+            }
+
             const valid = result === true;
 
             if (valid) {
@@ -175,7 +200,7 @@ async function run() {
             } else {
                 const failMessage =
                     typeof testObj.failMsg === "function"
-                        ? testObj.failMsg(result)
+                        ? testObj.failMsg({ data, file, imageExists, rawContent, imageFiles })
                         : testObj.failMsg;
                 commentString += `${failMessage}\n`;
             }
